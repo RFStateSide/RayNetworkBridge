@@ -15,12 +15,15 @@ logs, manifests and reports remain outside tracked source.
 - Published source-only Release:
   https://github.com/RFStateSide/RayNetworkBridge/releases/tag/v0.1.0
   (Release ID 431224587). Approved notes retained with download/verification data.
-- Single manually uploaded asset: `RayNetworkBridge-0.1.0.tar.gz`, 33,858 bytes,
-  asset ID 701063560. SHA-256:
-  `d5769e8ed62f644c15301856bf789e3a481668669bfd1b673424ee3ed00d468d`.
+- Single manually uploaded asset: `RayNetworkBridge-0.1.0.tar.gz`, 33,855 bytes,
+  asset ID 701082250. SHA-256:
+  `a7418bfe39901baab2b39faa89a50061e32eca25bd1861b42882466404323223`.
   Versioned top directory contains all 14 accepted source/support files.
   Two independent constructions from accepted Git blobs produce identical bytes;
   fixed gzip timestamp, commit-derived tar timestamp, normalized owner/modes.
+  Initial Windows-separator directory headers were corrected during M1.4;
+  final headers are POSIX, and native Linux extraction yields exactly one root.
+  Initial bytes remain private evidence; released source contents/tag are unchanged.
 - Anonymous clone/tag/README/license/provenance/protocol and GitHub-generated
   source download verified. Anonymous Release asset download matches retained
   package and website-workflow copy exactly. Generated GitHub source links are
@@ -29,6 +32,9 @@ logs, manifests and reports remain outside tracked source.
   tests pass. Its independently extracted offered-source ZIP also passes all 25.
   Actual virtual CLI network-source retrieval matches the deployed snapshot;
   SHA-256 `a582465918facbaca004d5229d08430a048722ecfdcc147fe0871522b36c0608`.
+  Native Ubuntu extraction, all 25 tests, CLI startup and source retrieval also
+  pass. Offered-source ZIP member bytes match the deployed files on both OSes;
+  ZIP container hashes may differ by platform metadata.
   No real CAN socket/transmission or operating service changes were required.
 - Only existing administrators RayJr2/kb1so have maintainer access; no teams,
   deploy keys, hooks or installed Apps found. Actions defaults read-only; no
