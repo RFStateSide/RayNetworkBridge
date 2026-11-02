@@ -46,3 +46,38 @@ CAN health inspection runs every 0.5 seconds with an ip subprocess timeout of
 reported error/drop and CAN extended statistics. No interface changes or counter
 resets are performed. Disconnect discards pending application queue entries;
 it cannot recall data already accepted by the kernel or CAN network.
+
+## Deployment source offer
+
+The `hello` envelope additionally contains an optional `source` object with
+`license`, a prominent `notice`, `request=source`, `bytes`, `sha256`, and
+`revision=sha256:<archive digest>`. The digest identifies the complete deployment
+source ZIP; it is content-addressed and does not assert a Git commit or public
+URL. The CLI requires and snapshots an explicit source allowlist at startup.
+Runtime keys/configuration, Git metadata and arbitrary files are never selected.
+
+On a fresh connection, a source client sends `{"kind":"source"}`. It does not
+authenticate for TX. An already RX-authorized connection may also request source;
+TX/service connections must reconnect RX first. Existing IP/client-count limits
+apply. This command does not enqueue CAN data or authorize Sending.
+
+The dedicated response consists of `kind=source_chunk`, sequential zero-based
+`index` and base64 `data` (at most 512 decoded bytes/chunk), then
+`kind=source_end`, `bytes` and `sha256`. Each envelope remains below the existing
+1024-byte limit. The server closes the connection after transfer; CAN broadcasts
+are suppressed for that source-transfer session. Frames already queued before
+the request may precede the chunks. Other clients continue normally.
+
+Source input and archive sizes are bounded to 2 MiB; server transfer deadline is
+5 seconds. The provided helper has a 15-second overall deadline, line/size/order/
+checksum checks, and a bound on preceding CAN frames. It saves only verified
+bytes, does not overwrite and never extracts/executes them. SHA-256 detects an
+incorrect transfer, not a malicious network peer: use SSH for server identity,
+confidentiality and integrity over untrusted networks.
+
+Existing RN2K/1 clients ignore the extra greeting object and receive no source
+chunks unless they explicitly request them. Version, CAN envelopes, challenge
+authentication, heartbeats, rate limits and leases remain unchanged. Modified
+operators must update the source allowlist for added preferred code and keep the
+offer usable for their network users. Public project publication alone does not
+identify a later modified deployment.

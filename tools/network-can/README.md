@@ -6,13 +6,17 @@ The application and bridge use RN2K/1, not a second PGN codec.
 
 ## Install and run
 
-Copy this directory to a private Linux directory. No pip packages are needed.
+Install the complete standalone project source tree in a private Linux directory,
+including docs and tests; do not copy this tools subdirectory alone. Run from the
+project root, using `tools/network-can/raynmea_bridge.py` for the commands below.
+No pip packages are needed. The root README documents matching-source retrieval
+with `tools/network-can/get_source.py`.
 Create a random key locally without printing it:
 
 ```sh
 umask 077
 python3 -c 'import secrets; open("access.key","w").write(secrets.token_hex(32))'
-python3 raynmea_bridge.py --interface can0 --bind 192.0.2.10 --port 29501 \
+python3 tools/network-can/raynmea_bridge.py --interface can0 --bind 192.0.2.10 --port 29501 \
   --key-file access.key --allow-client 192.0.2.20/32
 ```
 
@@ -49,14 +53,14 @@ Stopping the bridge closes its client sessions without changing CAN configuratio
 The same bridge works with an owner-created Linux `vcan0`:
 
 ```sh
-python3 raynmea_bridge.py --interface vcan0 --key-file access.key
+python3 tools/network-can/raynmea_bridge.py --interface vcan0 --key-file access.key
 ```
 
 Where vcan is unavailable, an isolated in-process raw-frame hub uses the same wire
 protocol and has **no CAN socket**:
 
 ```sh
-python3 raynmea_bridge.py --virtual --interface lab --key-file access.key
+python3 tools/network-can/raynmea_bridge.py --virtual --interface lab --key-file access.key
 ```
 
 Use separate ports for physical and virtual listeners. The client's interface name

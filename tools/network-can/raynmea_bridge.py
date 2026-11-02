@@ -2,12 +2,62 @@
 # Copyright (C) 2026 RF StateSide LLC; SPDX-License-Identifier: AGPL-3.0-or-later
 """RN2K/1 bounded raw Classic-CAN TCP bridge. Python 3.9+ standard library only."""
 import argparse, asyncio, hashlib, hmac, ipaddress, json, os, secrets, socket, struct, time, subprocess, contextlib
+import base64, io, zipfile
+from pathlib import Path
 
 MAX_LINE = 1024
 FRAME = struct.Struct('=IB3x8s')
 
+# Snapshot the executed script before a later on-disk edit can change the offer.
+IMPLEMENTATION_SOURCE = Path(__file__).read_bytes()
+MAX_SOURCE_BYTES = 2 * 1024 * 1024
+SOURCE_PATHS = (
+    '.gitignore', 'LICENSE', 'PROVENANCE.md', 'PUBLIC_RELEASE_AUDIT.md', 'README.md',
+    'docs/protocol.md', 'docs/RELEASE_NOTES.md', 'tests/network_bridge_tests.py',
+    'tests/readiness_tests.py', 'tests/source_offer_tests.py',
+    'tools/network-can/.gitignore', 'tools/network-can/README.md',
+    'tools/network-can/raynmea_bridge.py', 'tools/network-can/get_source.py',
+)
+
+def build_source_offer(root=None):
+    """Immutable, allowlisted preferred source; no Git, credentials or user data."""
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    if root.is_symlink(): raise ValueError('Source root must not be a symlink')
+    root = root.resolve(strict=True)
+    files, manifest, total = {}, [], 0
+    for name in SOURCE_PATHS:
+        file = root / name
+        if any(p.is_symlink() for p in (file, *file.parents) if p != root.parent):
+            raise ValueError('Source symlinks are not offered')
+        if not file.is_file() or not file.resolve().is_relative_to(root):
+            raise ValueError('Complete preferred source tree is required')
+        if name == 'tools/network-can/raynmea_bridge.py':
+            data = IMPLEMENTATION_SOURCE
+        else:
+            with file.open('rb') as source: data = source.read(MAX_SOURCE_BYTES + 1)
+        total += len(data)
+        if total > MAX_SOURCE_BYTES: raise ValueError('Source size bound')
+        files[name] = data
+        manifest.append(dict(path=name, bytes=len(data), sha256=hashlib.sha256(data).hexdigest()))
+    files['SOURCE_MANIFEST.json'] = (json.dumps(manifest, indent=2) + '\n').encode()
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, data in sorted(files.items()):
+            info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, data)
+    data = output.getvalue()
+    if len(data) > MAX_SOURCE_BYTES: raise ValueError('Source archive bound')
+    digest = hashlib.sha256(data).hexdigest()
+    return data, dict(license='AGPL-3.0-or-later', sha256=digest, bytes=len(data),
+                     revision='sha256:' + digest, request='source',
+                     notice='Corresponding Source for this deployment is available here at no charge. Request source on an RX connection.')
+
+
 class Bridge:
-    def __init__(self, interface, key=b'', virtual=False, allow=()):
+    def __init__(self, interface, key=b'', virtual=False, allow=(), source_offer=None):
+        self.source_offer = source_offer
         self.interface, self.key, self.virtual = interface, key, virtual
         self.allow = [ipaddress.ip_network(n) for n in allow]
         self.peers, self.sequence, self.bus, self.fault = set(), 0, None, False
@@ -56,7 +106,7 @@ class Bridge:
         self.sequence += 1
         obj=dict(frame, kind='frame', seq=self.sequence, origin=origin, timestamp_ns=time.time_ns())
         for peer in tuple(self.peers):
-            if peer['id'] != origin: self.emit(peer, obj)
+            if peer['id'] != origin and not peer.get('source_transfer'): self.emit(peer, obj)
 
     async def read_bus(self):
         loop=asyncio.get_running_loop()
@@ -106,7 +156,9 @@ class Bridge:
             if self.allow and not any(address in n for n in self.allow): return
             if len(self.peers)>=16 or self.fault: return
             self.peers.add(p)
-            self.emit(p, {'kind':'hello','version':1,'interface':self.interface,'client':p['id'],'nonce':p['nonce']})
+            hello = {'kind':'hello','version':1,'interface':self.interface,'client':p['id'],'nonce':p['nonce']}
+            if self.source_offer: hello['source'] = self.source_offer[1]
+            self.emit(p, hello)
             while True:
                 line=await asyncio.wait_for(reader.readline(), 5)
                 if not line: break
@@ -114,7 +166,22 @@ class Bridge:
                 m=json.loads(line)
                 if not isinstance(m,dict): raise ValueError('Envelope')
                 k=m.get('kind'); now=time.monotonic()
-                if k=='auth':
+                if k=='source':
+                    if p['mode'] != 'rx' or not self.source_offer:
+                        raise ValueError('Source retrieval requires a fresh RX connection')
+                    p['source_transfer'] = True
+                    data, metadata = self.source_offer
+                    # Dedicated bounded transfer; never authorize or enqueue CAN TX.
+                    async def transfer():
+                        for index, offset in enumerate(range(0, len(data), 512)):
+                            self.emit(p, dict(kind='source_chunk', index=index,
+                                             data=base64.b64encode(data[offset:offset+512]).decode('ascii')))
+                            await writer.drain()
+                        self.emit(p, dict(kind='source_end', sha256=metadata['sha256'], bytes=len(data)))
+                        await writer.drain()
+                    await asyncio.wait_for(transfer(), 5)
+                    return
+                elif k=='auth':
                     if p['authorized']: raise ValueError('Reconnect to reauthorize')
                     mode=m.get('mode')
                     if not (mode in ('rx','tx','service') and m.get('interface')==self.interface): raise ValueError("Validation failed")
@@ -153,10 +220,12 @@ class Bridge:
 async def run(args):
     key=open(args.key_file,'rb').read().strip() if args.key_file else b''
     if os.name=="posix" and args.key_file and (os.stat(args.key_file).st_mode&0o077): raise SystemExit('Key file must have mode0600')
-    b=Bridge(args.interface,key,args.virtual,args.allow_client)
+    source_offer = build_source_offer()
+    b=Bridge(args.interface,key,args.virtual,args.allow_client,source_offer)
     await b.start()
     async with await asyncio.start_server(b.client,args.bind,args.port,limit=MAX_LINE+1) as server:
         print('RN2K/1 port='+str(server.sockets[0].getsockname()[1])+'; RX default; '+('virtual bus' if args.virtual else 'SocketCAN')+'; explicit authenticated TX only',flush=True)
+        print('AGPL Corresponding Source: request source on this listener; revision='+source_offer[1]['revision']+'; free ZIP; see get_source.py',flush=True)
         await server.serve_forever()
 
 if __name__=='__main__':

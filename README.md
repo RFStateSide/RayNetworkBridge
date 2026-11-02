@@ -6,8 +6,44 @@ TCP protocol used by RayNmeaSimulator's **Network NMEA2000** connection. The
 simulator performs NMEA 2000 decoding, fast-packet handling and device identity
 management; this bridge does not implement another NMEA codec.
 
-Public Engineering Reference â€” AS-IS. This is a standalone source candidate for
-owner review, not a published release or an installed service.
+**Public Engineering Reference — AS-IS.** RayNetworkBridge transports Classic CAN
+frames for controlled development and evaluation. It does not configure CAN or
+install a managed service.
+
+## License and matching deployment source
+
+Copyright (C) 2026 RF StateSide LLC. Licensed under **AGPL-3.0-or-later**;
+see [LICENSE](LICENSE). Every bridge greeting prominently offers the matching
+deployment source at no charge. Retrieve it from the same listener:
+
+```sh
+python3 tools/network-can/get_source.py 127.0.0.1 RayNetworkBridge-deployed-source.zip --port 29501
+```
+
+Use your bridge address, or the loopback endpoint of your SSH tunnel. No shared
+TX key is needed. The RX IP allowlist still applies. The helper verifies size,
+order and SHA-256, refuses to overwrite an existing file, and never extracts or
+executes the ZIP. A checksum is a consistency check, not server authentication;
+use an SSH tunnel for an untrusted path. The returned archive contains the preferred Python source,
+tests, full license, instructions and a per-file hash manifest. Its SHA-256
+identifies this deployment snapshot, including local modifications; it is not a
+claim that the working tree is an unmodified Git commit. The offer is held in
+memory from startup and remains stable if files are subsequently edited. Restart
+with the complete updated source tree when intentionally deploying a new version.
+
+Canonical project: [RFStateSide/RayNetworkBridge](https://github.com/RFStateSide/RayNetworkBridge).
+The deployed-source offer does not depend on GitHub visibility, a mutable branch
+or a published Release. A repository download and an operator's later modified
+deployment may differ; retrieve the source from the deployment you are using.
+
+Operators modifying this AGPL program must retain a prominent source offer for
+remote users under section 13. Keep the complete preferred source tree alongside
+the script, include every added code/dependency file in the explicit source
+allowlist, and verify a retrieved snapshot before exposing the deployment.
+Do not add keys, runtime configuration, captures or user data to that allowlist.
+Provide the source notice in your client/setup instructions as well; third-party
+client interfaces may not display optional greeting metadata. See the
+[source protocol](docs/protocol.md#deployment-source-offer).
 
 ## Requirements and supported environments
 
@@ -40,7 +76,9 @@ the explicit `python3` invocation shown above.
 
 ## Installation and configuration
 
-Copy this source to a private directory. No installer or package manager is
+Copy the complete source tree, including docs and tests, to a private directory.
+Do not copy only the bridge script or tools subdirectory: startup checks the
+preferred-source allowlist before opening the CAN interface. No package manager is
 invoked. Run as an appropriately restricted non-root account with access to the
 already configured CAN interface. This utility never changes CAN bitrate, link
 state, queue configuration or startup services.
@@ -113,7 +151,8 @@ and [RN2K/1 contract](docs/protocol.md).
 
 For an existing owner-configured Linux vcan0 interface, use `--interface vcan0`.
 The interface must already be UP; this program does not create or remove it.
-Real kernel-vcan end-to-end behavior remains a separate qualification item.
+The in-process hub tests do not establish real kernel-vcan timing or physical
+equipment compatibility.
 
 Where vcan is unavailable, this command opens no CAN socket:
 
@@ -133,7 +172,7 @@ session writes. The utility provides no daemon installer, systemd unit or restar
 manager. It does not reload keys without a process restart. Already queued kernel
 or transmitted CAN data cannot be recalled.
 
-A future reviewed systemd example should use Type=simple, an explicit absolute
+If you independently create a systemd unit, use Type=simple, an explicit absolute
 Python/script path, a non-root service account and protected key, journald output,
 and Restart=no initially. Coordinate startup with the separately owned CAN setup
 service. Do not configure automatic recovery after a CAN-health fault without a
@@ -149,7 +188,9 @@ under an independently configured service.
 
 Verify address/port, interface spelling, IP allowlist and key permissions if
 connection fails. Check the CAN health counters for a rejected physical startup.
-RX does not require a key. An expired TX/service session requires fresh explicit
+RX does not require a key. A missing or unsafe source-tree file causes startup
+to fail before opening CAN; restore the complete matching deployment source,
+not an unrelated historical file. An expired TX/service session requires fresh explicit
 authorization on a new connection. Do not retry stale frames after faults.
 
 The bridge has bounded client counts, queues, line sizes and TX rates; see the
@@ -171,5 +212,5 @@ Python, Linux and iproute2 remain separately licensed runtime dependencies; no
 copies are bundled here. Release source must include this implementation, tests,
 instructions and any modifications. Any binary/runtime distribution needs its
 own actual-component inventory and corresponding-source review. AGPL-3.0-or-later
-is retained for this standalone project. Initial release version v0.1.0 is
-proposed, subject to owner release approval; wire protocol remains RN2K/1.
+is retained for this standalone project. Release source scope is documented in [v0.1.0 notes](docs/RELEASE_NOTES.md);
+wire protocol remains RN2K/1.

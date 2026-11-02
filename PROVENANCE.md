@@ -35,3 +35,12 @@ qualified startup correction and its failing-before/passing-after regression are
 preserved in the initial commit. M1.2 retains all M1.1 implementation/test bytes;
 only the README, this provenance note and the sole release audit are refreshed
 for independent private repository establishment.
+
+
+M1.3 adds the allowlisted in-memory deployment source offer, compatible RN2K/1
+greeting/retrieval extension, bounded retrieval helper, real-source/protocol tests
+and source-release notes. These changes retain RF StateSide ownership and AGPL
+terms and use Python standard-library APIs only. No externally copied code,
+runtime dependencies, assets, private configuration or historical Git objects
+are introduced. Snapshot digests describe deployment contents, not an invented
+Git revision or public availability event.
