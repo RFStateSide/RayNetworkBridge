@@ -41,7 +41,8 @@ logs, manifests and reports remain outside tracked source.
 
 ## Source authority and preservation
 
-- Independent PRIVATE repository RFStateSide/RayNetworkBridge, ID 1442660341.
+- Independent repository RFStateSide/RayNetworkBridge, ID 1442660341
+  (initially PRIVATE; now PUBLIC as verified above).
   Accepted initial commit: 1418990ef77bb0c3848eef1be3c552272e3d421b.
   Its root commit imports no RayNmeaSimulator history. The owner accepted M1.3
   and authorized private source closeout in M1.3A and controlled publication in
