@@ -1,15 +1,51 @@
 # RayNetworkBridge public-source release readiness
 
-M1.3, 2026-11-02. Target: documented v0.1.0 Python source, Public Engineering
+M1.4, 2026-11-02. Published v0.1.0 Python source, Public Engineering
 Reference — AS-IS. This is the sole maintained repository audit. Detailed test
 logs, manifests and reports remain outside tracked source.
+
+
+## Verified public publication — M1.4
+
+- PUBLIC repository: https://github.com/RFStateSide/RayNetworkBridge
+  (original standalone ID 1442660341 retained).
+- Accepted release source: `9d2dac04a9374aca93e37b558c7aed7ac24c5607`.
+  Annotated `v0.1.0` tag object: `ea5381a71adb2964a0df91424360e7c50db792f0`.
+  It points exactly to the accepted source and is not moved by this audit update.
+- Published source-only Release:
+  https://github.com/RFStateSide/RayNetworkBridge/releases/tag/v0.1.0
+  (Release ID 431224587). Approved notes retained with download/verification data.
+- Single manually uploaded asset: `RayNetworkBridge-0.1.0.tar.gz`, 33,858 bytes,
+  asset ID 701063560. SHA-256:
+  `d5769e8ed62f644c15301856bf789e3a481668669bfd1b673424ee3ed00d468d`.
+  Versioned top directory contains all 14 accepted source/support files.
+  Two independent constructions from accepted Git blobs produce identical bytes;
+  fixed gzip timestamp, commit-derived tar timestamp, normalized owner/modes.
+- Anonymous clone/tag/README/license/provenance/protocol and GitHub-generated
+  source download verified. Anonymous Release asset download matches retained
+  package and website-workflow copy exactly. Generated GitHub source links are
+  separate from the single uploaded distribution asset.
+- Downloaded package extraction, committed-file hashes, syntax, CLI and 25 focused
+  tests pass. Its independently extracted offered-source ZIP also passes all 25.
+  Actual virtual CLI network-source retrieval matches the deployed snapshot;
+  SHA-256 `a582465918facbaca004d5229d08430a048722ecfdcc147fe0871522b36c0608`.
+  No real CAN socket/transmission or operating service changes were required.
+- Only existing administrators RayJr2/kb1so have maintainer access; no teams,
+  deploy keys, hooks or installed Apps found. Actions defaults read-only; no
+  workflows shipped. Public fork access is enabled; Pages is not enabled.
+  master has no ruleset/protection; the public ruleset API is now accessible and
+  returns none. Protection policy remains an owner maintenance decision.
+- No RF StateSide website changes or announcement. An identical verified artifact
+  is retained privately for the separately authorized website download workflow.
+  No compiled installers, extra assets or new physical/service claims published.
 
 ## Source authority and preservation
 
 - Independent PRIVATE repository RFStateSide/RayNetworkBridge, ID 1442660341.
   Accepted initial commit: 1418990ef77bb0c3848eef1be3c552272e3d421b.
   Its root commit imports no RayNmeaSimulator history. The owner accepted M1.3
-  and authorized private source closeout in M1.3A; no publication is authorized.
+  and authorized private source closeout in M1.3A and controlled publication in
+  M1.4. Release source is fixed at 9d2dac04a9374aca93e37b558c7aed7ac24c5607.
 - RF StateSide ownership, full AGPL-3.0-or-later and original provenance retained.
   Added source-offer/helper/test code uses Python standard-library APIs only.
   No Qt, NMEA, SDL, CANboat, artwork, credentials or runtime libraries bundled.
@@ -78,13 +114,18 @@ logs, manifests and reports remain outside tracked source.
   GitHub's ruleset API reports a private-plan limitation. Recheck access and
   available branch protection at publication; do not change visibility to bypass it.
 
-## Decision and remaining owner gates
+## Decision and remaining owner actions
 
-Engineering GO for the narrowly scoped, documented public Python source release.
-The owner accepted M1.3 and the source-only scope and authorized private
-commit/push in M1.3A. No remaining demonstrated source-delivery implementation
-blocker is identified in this scope. Public visibility, public tag/Release and website
-publication each require separate authorization. After an approved commit, verify
-the release source from a fresh clone and recheck anonymous source access when
-visibility is intentionally changed. Do not advertise a publication event before
-it occurs. Operational replacement remains separately authorized work.
+PUBLIC RELEASE PASS for the approved source-only v0.1.0 scope. The owner explicitly
+accepted M1.3/M1.3A and authorized M1.4 visibility/tag/source Release operations.
+The released code/tag and distribution archive remain fixed to the accepted
+commit. This later audit-only commit records verified outcomes and is not a
+replacement release source or rebuilt distribution.
+
+RF StateSide website/Marine Firmware & Tools listing and download integration
+remain a separate owner-approved task. Operational replacement, managed-service
+or further physical qualification remain separately authorized work. Review
+maintenance/branch protection policy with the owner; no permissions were changed
+to perform this release. Future operator modifications must retain usable matching
+source and truthful source identity; publication does not certify arbitrary
+modified deployments or marine safety.
